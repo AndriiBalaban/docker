@@ -11,7 +11,7 @@ printf "composer "
 read command
 
 echo composer ${command}
-docker container restart composer-i && docker exec composer-i composer ${command}
+docker container restart composer && docker exec composer composer ${command}
 
 printf "\n\n\nFINISH\n"
 printf "Press enter to exit"

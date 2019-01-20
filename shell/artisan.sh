@@ -9,7 +9,7 @@ printf "php artisan "
 read command
 
 echo composer ${command}
-docker exec innstant4 php artisan ${command}
+docker exec dev.site php artisan ${command}
 
 printf "\n\n\nFINISH\n"
 printf "Press enter to exit"

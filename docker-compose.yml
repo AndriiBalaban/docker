@@ -2,7 +2,11 @@ version: '3.2'
 services:
   web:
     build: ./php-server
-    container_name: innstant4
+    container_name: dev.site
+    depends_on:
+      - composer
+    links:
+      - composer
     environment:
     - APACHE_RUN_USER=www-data
     volumes:
@@ -10,11 +14,11 @@ services:
       source: ./src/site
       target: /var/www/site/
     - type: bind
-      source: ./config/sites-enabled/innstant.me.conf
-      target: /etc/apache2/sites-enabled/innstant.me.conf
+      source: ./config/sites-enabled/dev.site.conf
+      target: /etc/apache2/sites-enabled/dev.site.conf
     - type: bind
       source: ./config/php/php.ini-development
-      target: /usr/local/etc/php/php.ini
+      target: /etc/php/7.0/apache2/php.ini
     - type: bind
       source: ./config/xdebug/docker-php-ext-xdebug.ini
       target: /etc/php/7.0/apache2/conf.d/20-xdebug.ini
@@ -39,38 +43,44 @@ services:
     ports:
     - 80:80
     networks:
-      frontend:
-        ipv4_address: 172.16.238.15
+      dev:
+        ipv4_address: 172.16.240.10
     working_dir: /var/www/site
     extra_hosts:
-    - innstant.me:127.0.0.1
-    - aether3.me:172.16.238.10
-    external_links:
-      - aether3:aether3
+    - dev.site:127.0.0.1
 
   composer:
     build: ./composer
-    container_name: composer-i
-    volumes:
-    - type: bind
-      source: ./src/site
-      target: /var/www/site/
-    working_dir: /var/www/
-    command: bash -c "composer create-project --prefer-dist laravel/laravel site"
-
-  node:
-    image: node:8-slim
-    container_name: node
-    depends_on:
-    - composer
+    container_name: composer
     volumes:
     - type: bind
       source: ./src/site
       target: /var/www/site/
     working_dir: /var/www/site/
-    command: bash -c "npm install && npm run watch"
+    command: bash -c "composer install"
+
+  node:
+    image: node:8-slim
+    container_name: node
+    depends_on:
+      - composer
+    links:
+      - composer
+    volumes:
+    - type: bind
+      source: ./src/site
+      target: /var/www/site/
+    - type: bind
+      source: ./logs/npm
+      target: /root/.npm/_logs
+    working_dir: /var/www/site/
+    command: bash -c "apt-get update && apt-get install -y build-essential libpng-dev && yarn install && npm run watch"
 
 networks:
-  frontend:
-    external:
-      name : docker-aether3_backend
+  dev:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: 172.16.240.0/24
